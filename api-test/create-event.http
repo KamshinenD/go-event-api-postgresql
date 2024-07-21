@@ -1,0 +1,10 @@
+# REST CLIENT EXTENSION
+POST http://localhost:8080/events
+Content-type: application/json
+
+{
+    "name": "Test event",
+    "description":"Test event description",
+    "location":"Test location",
+    "dateTime": "2023-01-01T14:30:00.00Z"
+}
