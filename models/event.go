@@ -2,6 +2,7 @@ package models
 
 import (
 	"time"
+	"fmt"
 	"events.com/rest-api/db"
 )
 
@@ -78,4 +79,51 @@ func GetEventByID(id int64)(*Event, error){
 	}
 	return &event, nil
 	//pls note that we had to use pointer for event so that it can take a nil value when there is an error
+}
+
+
+func (event Event) Update() error{
+	query :=`
+		UPDATE events
+		SET name=?, description=?, location=?, dateTime=?
+		WHERE id=?
+	`
+
+	stmt, err := db.DB.Prepare(query)
+
+	if err !=nil{
+		return err
+	}
+
+	defer stmt.Close()
+
+	_, err=stmt.Exec(event.Name, event.Description, event.Location, event.DateTime, event.ID)
+	return err
+}
+
+
+func (e Event) Delete() error {
+    query := "DELETE FROM events WHERE id = ?"
+    
+    stmt, err := db.DB.Prepare(query)
+    if err != nil {
+        return err
+    }
+    defer stmt.Close()
+
+    result, err := stmt.Exec(e.ID)
+    if err != nil {
+        return err
+    }
+
+    // rowsAffected, err := result.RowsAffected()
+    // if err != nil {
+    //     return fmt.Errorf("failed to get affected rows: %w", err)
+    // }
+
+    // if rowsAffected == 0 {
+    //     return fmt.Errorf("no event found with id %d", e.ID)
+    // }
+
+    return nil
 }
