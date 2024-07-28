@@ -2,7 +2,6 @@ package models
 
 import (
 	"time"
-	"fmt"
 	"events.com/rest-api/db"
 )
 
@@ -12,7 +11,7 @@ type Event struct {
 	Description string    `binding:"required"`
 	Location    string    `binding:"required"`
 	DateTime    time.Time `binding:"required"`
-	UserId      int
+	UserId      int64
 }
 
 // var events = []Event{}
@@ -27,7 +26,7 @@ var events = []Event{
 	},
 }
 
-func (e Event) Save() error {
+func (e *Event) Save() error {
 	//later add it to database
 	query:= `INSERT INTO events(name, description, location, dateTime, user_id) 
 	VALUES(?, ?, ?, ?, ?)`
@@ -65,7 +64,7 @@ func GetAllEvents() ([]Event, error) {
 		events= append(events, event)
 	}
 	return events, nil
-	return events, nil
+	// return events, nil
 }
 
 func GetEventByID(id int64)(*Event, error){
@@ -111,8 +110,10 @@ func (e Event) Delete() error {
     }
     defer stmt.Close()
 
-    result, err := stmt.Exec(e.ID)
-    if err != nil {
+    // result, err := stmt.Exec(e.ID)
+    _, err = stmt.Exec(e.ID)
+ 
+	if err != nil {
         return err
     }
 
