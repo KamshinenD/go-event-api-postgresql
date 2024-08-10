@@ -7,7 +7,7 @@ import (
 )
 
 const secretKey="mySecretKey"
-func GenerateToken(email string, userId int64) (string, error) {
+func GenerateToken(email string, userId string) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"email": email,
 		"userId":userId,
@@ -19,7 +19,7 @@ func GenerateToken(email string, userId int64) (string, error) {
 }
 
 
-func VerifyToken(token string) (int64, error){
+func VerifyToken(token string) (string, error){
 
 parsedToken, err := jwt.Parse(token, func(token *jwt.Token)(interface{}, error){
 		_, ok := token.Method.(*jwt.SigningMethodHMAC) //...HS256 is a type of HMAC
@@ -33,23 +33,24 @@ parsedToken, err := jwt.Parse(token, func(token *jwt.Token)(interface{}, error){
 	})
 
 	if err != nil{
-		return 0, errors.New("could not parse token: " + err.Error())
+		return "", errors.New("could not parse token: " + err.Error())
 	}
 
 	tokenIsValid := parsedToken.Valid
 
 	if !tokenIsValid{
-		return 0, errors.New ("Invalid token")
+		return "", errors.New ("Invalid token")
 	}
 
 	claims, ok := parsedToken.Claims.(jwt.MapClaims)
 
 	if !ok{
-		return 0, errors.New ("Invalid token claims")
+		return "", errors.New ("Invalid token claims")
 	}
 
 	// email:=claims["email"].(string)
-	userId:=int64(claims["userId"].(float64))
+	// userId:=int64(claims["userId"].(float64))
+	userId:= claims["userId"].(string)
 
 	return userId, nil
 }

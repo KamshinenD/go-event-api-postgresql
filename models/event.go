@@ -6,45 +6,59 @@ import (
 )
 
 type Event struct {
-	ID          int64
-	Name        string    `binding:"required"`
-	Description string    `binding:"required"`
-	Location    string    `binding:"required"`
-	DateTime    time.Time `binding:"required"`
-	UserId      int64
+	ID          string    `json:"id"`          // UUID represented as a string
+	Name        string    `json:"name" binding:"required"`
+	Description string    `json:"description" binding:"required"`
+	Location    string    `json:"location" binding:"required"`
+	DateTime    time.Time `json:"dateTime" binding:"required"`
+	UserId      string    `json:"userId"`      // UUID represented as a string
 }
+
 
 // var events = []Event{}
 var events = []Event{
-	{
-		ID:          1,
-		Name:        "Initial Event",
-		Description: "This is the initial event",
-		Location:    "New York",
-		DateTime:    time.Date(2024, time.July, 13, 10, 0, 0, 0, time.UTC),
-		UserId:      1,
-	},
+	// {
+	// 	ID:          1,
+	// 	Name:        "Initial Event",
+	// 	Description: "This is the initial event",
+	// 	Location:    "New York",
+	// 	DateTime:    time.Date(2024, time.July, 13, 10, 0, 0, 0, time.UTC),
+	// 	UserId:      1,
+	// },
 }
+
+// func (e *Event) Save() error {
+// 	//later add it to database
+// 	query := `INSERT INTO events(name, description, location, dateTime, user_id) 
+// 	VALUES($1, $2, $3, $4, $5) RETURNING id`
+// 	stmt, err := db.DB.Prepare(query)
+// 	if err !=nil{
+// 		return err
+// 	}
+// 	defer stmt.Close()
+// 	result, err := stmt.Exec(e.Name, e.Description, e.Location, e.DateTime, e.UserId)
+// 	if err !=nil{
+// 		return err
+// 	}
+
+// 	id, err :=result.LastInsertId()
+// 	e.ID= id
+// 	return err
+// 	// events = append(events, e)
+// }
 
 func (e *Event) Save() error {
-	//later add it to database
-	query:= `INSERT INTO events(name, description, location, dateTime, user_id) 
-	VALUES(?, ?, ?, ?, ?)`
-	stmt, err := db.DB.Prepare(query)
-	if err !=nil{
-		return err
-	}
-	defer stmt.Close()
-	result, err := stmt.Exec(e.Name, e.Description, e.Location, e.DateTime, e.UserId)
-	if err !=nil{
-		return err
-	}
+	query := `INSERT INTO events(name, description, location, dateTime, user_id) 
+	VALUES($1, $2, $3, $4, $5) RETURNING id`
 
-	id, err :=result.LastInsertId()
-	e.ID= id
-	return err
-	// events = append(events, e)
+	// Use QueryRow to execute the query and retrieve the generated ID
+	err := db.DB.QueryRow(query, e.Name, e.Description, e.Location, e.DateTime, e.UserId).Scan(&e.ID)
+	if err != nil {
+		return err
+	}
+	return nil
 }
+
 
 func GetAllEvents() ([]Event, error) {
 	query:= "SELECT * FROM events"
@@ -67,8 +81,8 @@ func GetAllEvents() ([]Event, error) {
 	// return events, nil
 }
 
-func GetEventByID(id int64)(*Event, error){
-	query:= "SELECT * FROM events WHERE id = ?" //we add ? instead of inputting id to avoid sql injection
+func GetEventByID(id string)(*Event, error){
+	query := "SELECT * FROM events WHERE id = $1"//we add ? instead of inputting id to avoid sql injection
 	row :=db.DB.QueryRow(query, id)
 
 	var event Event
@@ -82,10 +96,10 @@ func GetEventByID(id int64)(*Event, error){
 
 
 func (event Event) Update() error{
-	query :=`
+	query := `
 		UPDATE events
-		SET name=?, description=?, location=?, dateTime=?
-		WHERE id=?
+		SET name=$1, description=$2, location=$3, dateTime=$4
+		WHERE id=$5
 	`
 
 	stmt, err := db.DB.Prepare(query)
@@ -102,7 +116,7 @@ func (event Event) Update() error{
 
 
 func (e Event) Delete() error {
-    query := "DELETE FROM events WHERE id = ?"
+   query := "DELETE FROM events WHERE id = $1"
     
     stmt, err := db.DB.Prepare(query)
     if err != nil {

@@ -8,67 +8,73 @@ import
 	"events.com/rest-api/utils"
 )
 
-type User struct{
-	ID int64
-	FirstName string
-	LastName string
-	Email string `binding:"required"`
-	Password string `binding:"required"`
+type User struct {
+	ID        string `json:"id"`
+	FirstName string `json:"firstname"`
+	LastName  string `json:"lastname"`
+	Email     string `json:"email" binding:"required"`
+	Password  string `json:"password" binding:"required"`
 }
 
 
-func (u User) Save() error{
-	query:="INSERT INTO users(firstname, lastname, email, password) VALUES (?, ?, ?, ?)"
-	stmt, err :=db.DB.Prepare(query)
-
-	if err !=nil{
-		return err
-	}
-
-	defer stmt.Close()
-
-	hashedPassword, err:= utils.HashPassword(u.Password)
-
-	if err !=nil{
-		return err
-	}
-
-	result, err :=stmt.Exec(u.FirstName, u.LastName, u.Email, hashedPassword)
-
-	if err !=nil{
-		return err
-	}
-
-	userId, err :=result.LastInsertId()
-
-	u.ID=userId
-
-	return err
-	
-}
-
-// func(u User) ValidateCredentials() error{
-// 	query:= "SELECT password, email FROM users WHERE email=?"
-// 	row, err :=db.DB.Query(query, u.Email)
-	
-// 	var retrievedPassword string
-// 	err = row.Scan(&retrievedPassword)
+// func (u User) Save() error{
+// 	query:="INSERT INTO users(firstname, lastname, email, password) VALUES ($1, $2, $3, $4)"
+// 	stmt, err :=db.DB.Prepare(query)
 
 // 	if err !=nil{
-// 		return errors.New("Credentials Invalid")
+// 		return err
 // 	}
 
-// 	passwordIsValid:= utils.CheckPasswordHash(u.Password, retrievedPassword)
+// 	defer stmt.Close()
 
-// 	if !passwordIsValid{
-// 		return errors.New("Credentials Invalid")
+// 	hashedPassword, err:= utils.HashPassword(u.Password)
+
+// 	if err !=nil{
+// 		return err
 // 	}
 
-// 	return nil
+// 	result, err :=stmt.Exec(u.FirstName, u.LastName, u.Email, hashedPassword)
+
+// 	if err !=nil{
+// 		return err
+// 	}
+
+// 	userId, err :=result.LastInsertId()
+
+// 	u.ID=userId
+
+// 	return err
+	
 // }
 
+func (u *User) Save() error {
+	query := `INSERT INTO users(firstname, lastname, email, password) 
+	VALUES($1, $2, $3, $4) RETURNING id`
+
+	// Prepare and execute the query
+	stmt, err := db.DB.Prepare(query)
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+
+	hashedPassword, err := utils.HashPassword(u.Password)
+	if err != nil {
+		return err
+	}
+
+	// Use QueryRow to execute the query and retrieve the generated ID
+	err = stmt.QueryRow(u.FirstName, u.LastName, u.Email, hashedPassword).Scan(&u.ID)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+
 func (u *User) ValidateCredentials() error {
-    query := "SELECT id, password FROM users WHERE email=?"
+    query := "SELECT id, password FROM users WHERE email=$1"
     
 	var retrievedPassword string
 	row :=db.DB.QueryRow(query, u.Email)

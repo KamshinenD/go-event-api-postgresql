@@ -14,14 +14,14 @@ func signUp(context *gin.Context){
 	var user models.User
 	err := context.ShouldBindJSON(&user)
 	if err != nil {
-		context.JSON(http.StatusBadRequest, gin.H{"message": "Could not parse request data"})
+		context.JSON(http.StatusBadRequest, gin.H{"message": "Could not parse request data", "error":err.Error()})
 		return
 	}
 	
 	err=user.Save()
 
 	if err != nil {
-		context.JSON(http.StatusInternalServerError, gin.H{"message": fmt.Sprintf("Could not save data: %v", err)})
+		context.JSON(http.StatusInternalServerError, gin.H{"message": "Could not save data", "error":err.Error()})
 		return
 	}
 
@@ -33,7 +33,7 @@ func login(context *gin.Context){
 	var user models.User
 	err := context.ShouldBindJSON(&user)
 	if err != nil {
-		context.JSON(http.StatusBadRequest, gin.H{"message": "Could not parse request data"})
+		context.JSON(http.StatusBadRequest, gin.H{"message": "Could not parse request data", "error":err.Error()})
 		return
 	}
 	
@@ -44,7 +44,7 @@ func login(context *gin.Context){
 	// 	return
 	// }
 	if err != nil {
-		context.JSON(http.StatusUnauthorized, gin.H{"message": err.Error()})
+		context.JSON(http.StatusUnauthorized, gin.H{"message":"something went wrong","error":err.Error()})
 		return
 	}
 
@@ -62,7 +62,7 @@ func login(context *gin.Context){
 func getAllUsers(context *gin.Context) {
 	users, err := models.GetAllUsers()
 	if err !=nil{
-		context.JSON(http.StatusInternalServerError, gin.H{"message": err})
+		context.JSON(http.StatusInternalServerError, gin.H{"message": "unable to fetch users", "error":err.Error()})
 		return
 	}
 	// context.JSON(http.StatusOK, events)

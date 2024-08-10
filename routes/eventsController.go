@@ -2,7 +2,7 @@ package routes
 
 import (
 	"net/http"
-	"strconv"
+	// "strconv"
 
 	"events.com/rest-api/models"
 	"github.com/gin-gonic/gin"
@@ -26,9 +26,22 @@ func createEvent(context *gin.Context) {
 		return
 	}
 
-	userId:=context.GetInt64("userId")
+	// userId:=context.GetInt64("userId")
+	userId, exists := context.Get("userId") //userId from the token, was passed through the authorization
+	if !exists {
+		context.JSON(http.StatusUnauthorized, gin.H{"message": "user ID not found in context"})
+		return
+	}
+
+	// Type assertion for userId
+	userIdStr, ok := userId.(string)
+	if !ok {
+		context.JSON(http.StatusInternalServerError, gin.H{"message": "user ID is not a string"})
+		return
+	}
+
 	// event.ID = 1S
-	event.UserId = userId
+	event.UserId = userIdStr
 	err = event.Save()
 
 	if err !=nil{
@@ -39,12 +52,12 @@ func createEvent(context *gin.Context) {
 }
 
 func getEvent(context *gin.Context){
-	// eventId:= context.Param("id")
-	eventId, err:= strconv.ParseInt(context.Param("id"), 10, 64)
-	if err !=nil{
-		context.JSON(http.StatusBadRequest, gin.H{"message": "Could not parse eventId"})
-		return
-	}
+	eventId:= context.Param("id")
+	// eventId, err:= strconv.ParseInt(context.Param("id"), 10, 64)
+	// if err !=nil{
+	// 	context.JSON(http.StatusBadRequest, gin.H{"message": "Could not parse eventId"})
+	// 	return
+	// }
 	event, err := models.GetEventByID(eventId)
 	if err !=nil{
 		context.JSON(http.StatusInternalServerError, gin.H{"message": "could not fecth event"})
@@ -54,13 +67,27 @@ func getEvent(context *gin.Context){
 }
 
 func updateEvent(context *gin.Context){
-	eventId, err:= strconv.ParseInt(context.Param("id"), 10, 64)
-	if err !=nil{
-		context.JSON(http.StatusBadRequest, gin.H{"message": "Could not parse eventId"})
+	// eventId, err:= strconv.ParseInt(context.Param("id"), 10, 64)
+	eventId:= context.Param("id")
+	// if err !=nil{
+	// 	context.JSON(http.StatusBadRequest, gin.H{"message": "Could not parse eventId"})
+	// 	return
+	// }
+
+	// userId:=context.GetInt64("userId") //userId from the token, was passed through the authorization
+	userId, exists := context.Get("userId") //userId from the token, was passed through the authorization
+	if !exists {
+		context.JSON(http.StatusUnauthorized, gin.H{"message": "user ID not found in context"})
 		return
 	}
 
-	userId:=context.GetInt64("userId") //userId from the token, was passed through the authorization
+	// Type assertion for userId
+	userIdStr, ok := userId.(string)
+	if !ok {
+		context.JSON(http.StatusInternalServerError, gin.H{"message": "user ID is not a string"})
+		return
+	}
+
 	event, err := models.GetEventByID(eventId)
 
 	if err !=nil{
@@ -68,7 +95,7 @@ func updateEvent(context *gin.Context){
 		return
 	}
 
-	if event.UserId != userId{
+	if event.UserId != userIdStr{
 		context.JSON(http.StatusUnauthorized, gin.H{"message": "You are not authorized to update this event"})
 		return
 	}
@@ -91,15 +118,27 @@ func updateEvent(context *gin.Context){
 }
 
 func deleteEvent(context *gin.Context){
-	// eventId:= context.Param("id")
-	eventId, err:= strconv.ParseInt(context.Param("id"), 10, 64)
+	eventId:= context.Param("id")
+	// eventId, err:= strconv.ParseInt(context.Param("id"), 10, 64)
 
-	if err != nil {
-		context.JSON(http.StatusBadRequest, gin.H{"message": "Could not parse request data"})
+	// if err != nil {
+	// 	context.JSON(http.StatusBadRequest, gin.H{"message": "Could not parse request data"})
+	// 	return
+	// }
+
+	// userId:=context.GetInt64("userId") //userId from the token, was passed through the authorization
+	userId, exists := context.Get("userId")
+	if !exists {
+		context.JSON(http.StatusUnauthorized, gin.H{"message": "user ID not found in context"})
 		return
 	}
 
-	userId:=context.GetInt64("userId") //userId from the token, was passed through the authorization
+	// Type assertion for userId
+	userIdStr, ok := userId.(string)
+	if !ok {
+		context.JSON(http.StatusInternalServerError, gin.H{"message": "user ID is not a string"})
+		return
+	}
 
 	event, err := models.GetEventByID(eventId)
 
@@ -108,7 +147,7 @@ func deleteEvent(context *gin.Context){
 		return
 	}
 
-	if event.UserId != userId{
+	if event.UserId != userIdStr{
 		context.JSON(http.StatusUnauthorized, gin.H{"message": "You are not authorized to delete this event"})
 		return
 	}
